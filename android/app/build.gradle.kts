@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.flutter_offline_map"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -37,6 +37,19 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    aaptOptions {
+        noCompress += listOf("tflite", "task", "onnx", "bin")
+    }
+}
+
+dependencies {
+    // MediaPipe GenAI for Gemma model
+    implementation("com.google.mediapipe:tasks-genai:0.10.27")
+
+    // Kotlin Coroutines (MainActivity에서 사용)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }
 
 flutter {

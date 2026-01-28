@@ -55,24 +55,24 @@ class RagService {
       print("📊 RAG DB 상태: sources=${stats.sourceCount}, chunks=${stats.chunkCount}");
 
       // 6. 데이터가 비어있으면 DB를 초기화하고 JSON을 임베딩해서 직접 구축
-      if (chunkCount == 0 || sourceCount == 0) {
-        print("🗑 기존 RAG DB 초기화 후 재구성 시작...");
-        if (await File(_dbPath!).exists()) {
-          await File(_dbPath!).delete();
-        }
-        await initSourceDb(dbPath: _dbPath!);
+      // if (chunkCount == 0 || sourceCount == 0) {
+        // print("🗑 기존 RAG DB 초기화 후 재구성 시작...");
+        // if (await File(_dbPath!).exists()) {
+        //   await File(_dbPath!).delete();
+        // }
+        // await initSourceDb(dbPath: _dbPath!);
 
-        print("📥 JSON 데이터로 RAG DB 구축 시작...");
-        await _buildDbFromJson();
-        stats = await getSourceStats(dbPath: _dbPath!);
-        sourceCount = _toInt(stats.sourceCount);
-        chunkCount = _toInt(stats.chunkCount);
-        print("📊 RAG DB 재확인: sources=${stats.sourceCount}, chunks=${stats.chunkCount}");
+        // print("📥 JSON 데이터로 RAG DB 구축 시작...");
+        // await _buildDbFromJson();
+        // stats = await getSourceStats(dbPath: _dbPath!);
+        // sourceCount = _toInt(stats.sourceCount);
+        // chunkCount = _toInt(stats.chunkCount);
+        // print("📊 RAG DB 재확인: sources=${stats.sourceCount}, chunks=${stats.chunkCount}");
 
-        print("🔧 Chunk HNSW 인덱스 재구성 시작...");
-        await rebuildChunkHnswIndex(dbPath: _dbPath!);
-        print("✅ Chunk HNSW 인덱스 재구성 완료");
-      }
+        // print("🔧 Chunk HNSW 인덱스 재구성 시작...");
+        // await rebuildChunkHnswIndex(dbPath: _dbPath!);
+        // print("✅ Chunk HNSW 인덱스 재구성 완료");
+      // }
 
       _isInitialized = true;
       print("✅ RAG 엔진 준비 완료!");

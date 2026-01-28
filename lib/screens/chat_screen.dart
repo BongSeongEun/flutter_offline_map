@@ -120,14 +120,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
       // B. 정보가 있을 때의 프롬프트 (할루시네이션/반복 방지 강화)
       var prompt = """
-    <start_of_turn>user
-    Answer the question based on the following information:
-      You are an expert tour guide for Jeju Island.
-      Please introduce one of the Jeju tourist destinations based on the info provided.
-    [Jeju Tourist Information]
-    $trimmedInfo
-    <end_of_turn>
-    <start_of_turn>model
+        <start_of_turn>user
+        다음 정보를 바탕으로 질문에 답하십시오.
+
+        당신은 제주도 전문 관광 가이드입니다.
+
+        제공된 정보를 토대로 제주도의 관광 명소 한 곳을 소개해 주십시오.
+
+        [제주 관광 안내소]
+        $trimmedInfo
+        <end_of_turn>
+        <start_of_turn>model
     """;
       prompt = _truncatePrompt(prompt);
 

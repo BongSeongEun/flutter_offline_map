@@ -246,7 +246,6 @@ class _MapScreenState extends State<MapScreen> {
             initialCameraPosition: const CameraPosition(
               target: LatLng(33.3617, 126.5292), // 제주 중심 근사
               zoom: 11.0,
-              tilt: 45.0,
             ),
             styleString: _styleString!,
             myLocationEnabled: true,

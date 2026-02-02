@@ -29,7 +29,8 @@ class _MapScreenState extends State<MapScreen> {
   String? _errorMessage;
   bool _isLoading = true;
   bool _styleLoaded = false;
-  final List<Circle> _placeCircles = [];
+  static const String _restaurantSourceId = 'restaurant_cluster';
+  Map<String, dynamic>? _lastRestaurantGeoJson;
 
   @override
   void initState() {
@@ -128,26 +129,13 @@ class _MapScreenState extends State<MapScreen> {
   void _onStyleLoaded() {
     _styleLoaded = true;
     _renderRecommendedPlaces();
+    _refreshRestaurantClustersFromTiles();
   }
 
   Future<void> _renderRecommendedPlaces() async {
     if (!_styleLoaded || mapController == null) return;
-    await _clearPlaceCircles();
+    await _refreshRestaurantClustersFromTiles();
     if (widget.places.isEmpty) return;
-
-    for (final place in widget.places) {
-      final isSelected = widget.selected?.name == place.name;
-      final circle = await mapController!.addCircle(
-        CircleOptions(
-          geometry: LatLng(place.latitude, place.longitude),
-          circleRadius: isSelected ? 10.0 : 8.0,
-          circleColor: isSelected ? '#E53935' : '#1E88E5',
-          circleStrokeWidth: 2.0,
-          circleStrokeColor: '#FFFFFF',
-        ),
-      );
-      _placeCircles.add(circle);
-    }
 
     final focus = widget.selected ?? widget.places.first;
     mapController?.animateCamera(
@@ -158,12 +146,54 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Future<void> _clearPlaceCircles() async {
-    if (_placeCircles.isEmpty) return;
-    for (final circle in _placeCircles) {
-      await mapController?.removeCircle(circle);
+  Future<void> _refreshRestaurantClustersFromTiles() async {
+    final controller = mapController;
+    if (!_styleLoaded || controller == null) return;
+
+    final selectedName = widget.selected?.name;
+    final selectedNames = widget.places.map((place) => place.name).toSet();
+    final sourceFeatures = await controller.querySourceFeatures(
+      'openmaptiles',
+      'poi',
+      [
+        'all',
+        ['==', '\$type', 'Point'],
+        ['==', 'subclass', 'restaurant'],
+      ],
+    );
+
+    final features = <Map<String, dynamic>>[];
+    for (final raw in sourceFeatures) {
+      if (raw is! Map) continue;
+      final geometry = raw['geometry'];
+      if (geometry is! Map) continue;
+      final properties = Map<String, dynamic>.from(
+        (raw['properties'] as Map?) ?? const {},
+      );
+      final name = (properties['name:ko'] ?? properties['name'] ?? '').toString();
+      final isSelected = name.isNotEmpty && (name == selectedName || selectedNames.contains(name));
+      properties['selected'] = isSelected;
+
+      features.add({
+        'type': 'Feature',
+        'properties': properties,
+        'geometry': geometry,
+      });
     }
-    _placeCircles.clear();
+
+    if (features.isEmpty) {
+      if (_lastRestaurantGeoJson == null) return;
+      await controller.setGeoJsonSource(_restaurantSourceId, _lastRestaurantGeoJson!);
+      return;
+    }
+
+    final geojson = {
+      'type': 'FeatureCollection',
+      'features': features,
+    };
+
+    _lastRestaurantGeoJson = geojson;
+    await controller.setGeoJsonSource(_restaurantSourceId, geojson);
   }
 
   Future<void> _requestLocationPermission() async {
@@ -243,6 +273,7 @@ class _MapScreenState extends State<MapScreen> {
           MapLibreMap(
             onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
+            onCameraIdle: _refreshRestaurantClustersFromTiles,
             initialCameraPosition: const CameraPosition(
               target: LatLng(33.3617, 126.5292), // 제주 중심 근사
               zoom: 11.0,

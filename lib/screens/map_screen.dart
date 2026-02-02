@@ -31,6 +31,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _styleLoaded = false;
   static const String _restaurantSourceId = 'restaurant_cluster';
   Map<String, dynamic>? _lastRestaurantGeoJson;
+  bool _restaurantIconLoaded = false;
 
   @override
   void initState() {
@@ -128,6 +129,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onStyleLoaded() {
     _styleLoaded = true;
+    _ensureRestaurantIcon();
     _renderRecommendedPlaces();
     _refreshRestaurantClustersFromTiles();
   }
@@ -194,6 +196,20 @@ class _MapScreenState extends State<MapScreen> {
 
     _lastRestaurantGeoJson = geojson;
     await controller.setGeoJsonSource(_restaurantSourceId, geojson);
+  }
+
+  Future<void> _ensureRestaurantIcon() async {
+    if (_restaurantIconLoaded || mapController == null) return;
+    try {
+      final bytes = await rootBundle.load('assets/sprites/5370131.png');
+      await mapController!.addImage(
+        'restaurant_icon',
+        bytes.buffer.asUint8List(),
+      );
+      _restaurantIconLoaded = true;
+    } catch (e) {
+      debugPrint('식당 아이콘 로드 실패: $e');
+    }
   }
 
   Future<void> _requestLocationPermission() async {

@@ -28,6 +28,7 @@ flutter:
     - assets/map/south-korea.mbtiles
     - assets/map/style.json
     - assets/fonts/Noto_Sans_KR_Thin/
+    - assets/sprites/5370131.png
     - assets/models/gemma-3-1b-it.task
     - assets/models/model_quantized.onnx
     - assets/models/tokenizer.json

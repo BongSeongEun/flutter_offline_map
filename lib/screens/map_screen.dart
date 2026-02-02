@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -248,6 +249,72 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Future<void> _onMapClick(Point<double> point, LatLng coordinates) async {
+    final controller = mapController;
+    if (!_styleLoaded || controller == null) return;
+
+    final features = await controller.queryRenderedFeatures(
+      point,
+      const [
+        'restaurant-unclustered-icon',
+        'restaurant-unclustered-label',
+      ],
+      null,
+    );
+    if (features.isEmpty) return;
+
+    final feature = features.first;
+    if (feature is! Map) return;
+    final properties = Map<String, dynamic>.from(
+      (feature['properties'] as Map?) ?? const {},
+    );
+    if (properties['point_count'] != null) return;
+
+    final name = (properties['name:ko'] ?? properties['name'] ?? '이름 없음').toString();
+    final address = (properties['address'] ??
+            properties['addr:full'] ??
+            properties['addr:street'] ??
+            '')
+        .toString();
+    final subclass = (properties['subclass'] ?? '').toString();
+
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (subclass.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text('분류: $subclass'),
+              ),
+            if (address.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(address),
+              ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                '좌표: ${coordinates.latitude.toStringAsFixed(5)}, ${coordinates.longitude.toStringAsFixed(5)}',
+                style: const TextStyle(color: Colors.black54),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -290,6 +357,7 @@ class _MapScreenState extends State<MapScreen> {
             onMapCreated: _onMapCreated,
             onStyleLoadedCallback: _onStyleLoaded,
             onCameraIdle: _refreshRestaurantClustersFromTiles,
+            onMapClick: _onMapClick,
             initialCameraPosition: const CameraPosition(
               target: LatLng(33.3617, 126.5292), // 제주 중심 근사
               zoom: 11.0,
